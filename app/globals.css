@@ -205,3 +205,29 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* AI 编辑器中的滚动区域使用与深色面板一致的低对比滚动条。 */
+.editor-scrollbar {
+  scrollbar-color: #555b59 #202322;
+  scrollbar-width: thin;
+}
+
+.editor-scrollbar::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.editor-scrollbar::-webkit-scrollbar-track {
+  background: #202322;
+  border-radius: 999px;
+}
+
+.editor-scrollbar::-webkit-scrollbar-thumb {
+  background: #555b59;
+  border: 2px solid #202322;
+  border-radius: 999px;
+}
+
+.editor-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #6b7370;
+}

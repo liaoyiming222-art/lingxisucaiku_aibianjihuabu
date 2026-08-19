@@ -461,16 +461,16 @@ export function AiEditModal({ onClose }: { onClose: () => void }) {
     if (!hasSelection) return flash("请先创建智能、涂抹或套索选区")
     if (!description.trim()) return flash("请输入替换描述")
     if (isUploadingReference) return flash("参考图片仍在上传")
-    if (!referenceImageUrl) return flash("请先上传替换参考图片")
     setIsGenerating(true)
     try {
       const sourceUrl = await getOriginalImageUrl()
       const targetHint = smartSelection?.label ? `目标对象是${smartSelection.label}。` : "请根据文字描述识别需要替换的对象。"
-      const prompt = `请编辑第一张室内空间图片。${targetHint}修改要求：${description.trim()}。第二张图片仅作为替换对象的外观、材质和风格参考。只修改目标对象，严格保留原图其他区域的构图、空间结构、视角、光影和色彩，不要添加文字或说明。`
+      const referenceHint = referenceImageUrl ? "第二张图片仅作为替换对象的外观、材质和风格参考。" : "请根据文字描述完成修改。"
+      const prompt = `请编辑第一张室内空间图片。${targetHint}修改要求：${description.trim()}。${referenceHint}只修改目标对象，严格保留原图其他区域的构图、空间结构、视角、光影和色彩，不要添加文字或说明。`
       const response = await fetch("/api/runninghub/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt, imageUrls: [sourceUrl, referenceImageUrl], aspectRatio: "4:3", resolution: "1k" }),
+        body: JSON.stringify({ prompt, imageUrls: referenceImageUrl ? [sourceUrl, referenceImageUrl] : [sourceUrl], aspectRatio: "4:3", resolution: "1k" }),
       })
       const task = await response.json()
       if (!response.ok) throw new Error(task.error || "生成任务提交失败")
@@ -495,7 +495,7 @@ export function AiEditModal({ onClose }: { onClose: () => void }) {
       className="fixed inset-x-[5vw] bottom-[5vh] top-[9vh] z-50 flex overflow-hidden rounded-xl border border-white/10 bg-[var(--color-shell)]/95 shadow-2xl backdrop-blur-sm"
     >
       {/* 左侧工具栏 */}
-      <div className="flex w-[88px] shrink-0 flex-col items-center gap-1 overflow-y-auto border-r border-[var(--color-panel-line)] bg-[var(--color-panel)] py-3">
+      <div className="editor-scrollbar flex w-[88px] shrink-0 flex-col items-center gap-1 overflow-y-auto border-r border-[var(--color-panel-line)] bg-[var(--color-panel)] py-3">
         {editorTools.map((tool) => {
           const active = tool.id === activeTool
           return (
@@ -521,7 +521,7 @@ export function AiEditModal({ onClose }: { onClose: () => void }) {
 
       {/* 参数面板：宽度和留白按知末紧凑化 */}
       <div className="flex w-[308px] shrink-0 flex-col border-r border-[var(--color-panel-line)] bg-[var(--color-panel)]">
-        <div className="flex-1 overflow-y-auto p-4">
+        <div className="editor-scrollbar flex-1 overflow-y-auto p-4">
           {activeTool === "material" && (
             <MaterialPanel
               regionMode={regionMode}
@@ -571,7 +571,7 @@ export function AiEditModal({ onClose }: { onClose: () => void }) {
 
         <div className="relative border-t border-[var(--color-panel-line)] p-3">
           {showModelPicker && (
-            <div className="absolute bottom-[calc(100%+8px)] left-3 right-3 z-30 max-h-64 overflow-y-auto rounded-xl border border-[var(--color-panel-line)] bg-[#1b1b1b] p-1.5 shadow-2xl">
+            <div className="editor-scrollbar absolute bottom-[calc(100%+8px)] left-3 right-3 z-30 max-h-64 overflow-y-auto rounded-xl border border-[var(--color-panel-line)] bg-[#1b1b1b] p-1.5 shadow-2xl">
               <div className="sticky top-0 z-10 flex items-center justify-between bg-[#1b1b1b] px-2 pb-2 pt-1">
                 <span className="text-[11px] font-medium text-neutral-200">选择生成模型</span>
                 <span className="text-[9px] text-neutral-500">上下滑动查看更多</span>
@@ -640,7 +640,6 @@ export function AiEditModal({ onClose }: { onClose: () => void }) {
               {isGenerating && <LoaderCircle className="size-4 animate-spin" />}
               {isGenerating ? "正在生成" : "立即生成"}
             </span>
-            <span className="mt-0.5 block text-[10px] opacity-60">（免费剩余 4 次）</span>
           </button>
         </div>
       </div>
@@ -843,7 +842,7 @@ export function AiEditModal({ onClose }: { onClose: () => void }) {
             <span className="text-xs">暂无数据</span>
           </div>
         ) : (
-          <div className="mt-3 flex flex-col gap-2 overflow-y-auto">
+          <div className="editor-scrollbar mt-3 flex flex-col gap-2 overflow-y-auto">
             {generatedTools.map((item, index) => (
               <button
                 key={`${item.url}-${index}`}
@@ -938,7 +937,7 @@ function MaterialPanel({
         />
       </div>
       {showMaterialLib && (
-        <div className="flex flex-col gap-4 rounded-lg border border-[var(--color-panel-line)] bg-[var(--color-panel-soft)]/60 p-3">
+        <div className="editor-scrollbar flex max-h-72 flex-col gap-4 overflow-y-auto rounded-lg border border-[var(--color-panel-line)] bg-[var(--color-panel-soft)]/60 p-3 pr-2">
           {materialGroups.map((group) => (
             <div key={group.title}>
               <p className="mb-2 text-xs font-medium text-neutral-300">{group.title}</p>
@@ -1134,7 +1133,7 @@ function InpaintPanel({
         />
       </div>
       <div>
-        <p className="mb-2 text-sm font-medium text-neutral-200">替换图片</p>
+        <p className="mb-2 text-sm font-medium text-neutral-200">替换图片 <span className="text-[10px] font-normal text-neutral-500">（可选）</span></p>
         <input
           id="inpaint-reference-image"
           type="file"
@@ -1155,7 +1154,7 @@ function InpaintPanel({
           ) : (
             <>
               <Upload className="size-5" />
-              <span>上传图片作为替换参考</span>
+              <span>上传图片作为替换参考（可选）</span>
               <span className="text-[10px] text-neutral-500">支持 JPG、PNG、WebP，最大 10MB</span>
             </>
           )}
