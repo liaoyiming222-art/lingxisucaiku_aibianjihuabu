@@ -1,6 +1,6 @@
 "use client"
 
-import { useRef, useState, type PointerEvent as ReactPointerEvent } from "react"
+import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from "react"
 import { createPortal } from "react-dom"
 import Image from "next/image"
 import {
@@ -14,6 +14,8 @@ import {
   Move,
   Maximize,
   ChevronDown,
+  ChevronLeft,
+  ChevronRight,
   Check,
   Smile,
   Upload,
@@ -23,6 +25,7 @@ import {
   Sunset,
   ImageIcon,
   LoaderCircle,
+  Download,
 } from "lucide-react"
 import {
   editorTools,
@@ -54,7 +57,8 @@ const generationModels = [
 
 type MaterialPreviewState = { name: string; top: number }
 type UploadedMaterial = { name: string; url: string }
-type GeneratedItem = { label: string; url: string }
+type GeneratedItem = { id: string; label: string; url: string }
+type GenerationCount = 1 | 2 | 4
 
 function materialVariants(material: string) {
   const isWood = material.includes("木")
@@ -107,6 +111,7 @@ export function AiEditModal({ onClose }: { onClose: () => void }) {
   }])
   const historyIndex = useRef(0)
   const materialCloseTimer = useRef<number | null>(null)
+  const historyClickTimer = useRef<number | null>(null)
 
   const [activeTool, setActiveTool] = useState("material")
   const [regionMode, setRegionMode] = useState("smart")
@@ -126,6 +131,12 @@ export function AiEditModal({ onClose }: { onClose: () => void }) {
   const [eraserActive, setEraserActive] = useState(false)
   const [isGenerating, setIsGenerating] = useState(false)
   const [generatedTools, setGeneratedTools] = useState<GeneratedItem[]>([])
+  const [selectedHistoryId, setSelectedHistoryId] = useState<string | null>(null)
+  const [historyPreviewOpen, setHistoryPreviewOpen] = useState(false)
+  const [comparisonPosition, setComparisonPosition] = useState(50)
+  const [generationCount, setGenerationCount] = useState<GenerationCount>(1)
+  const [showGenerationCount, setShowGenerationCount] = useState(false)
+  const [generationProgress, setGenerationProgress] = useState({ completed: 0, total: 0 })
   const [selectedModel, setSelectedModel] = useState(generationModels[0])
   const [showModelPicker, setShowModelPicker] = useState(false)
   const [materialPreview, setMaterialPreview] = useState<MaterialPreviewState | null>(null)
@@ -447,6 +458,64 @@ export function AiEditModal({ onClose }: { onClose: () => void }) {
     throw new Error("生成超时，请稍后重试")
   }
 
+  function selectHistoryItem(item: GeneratedItem) {
+    setSelectedHistoryId(item.id)
+    setGeneratedImageUrl(item.url)
+    setComparisonPosition(50)
+  }
+
+  function handleHistoryClick(item: GeneratedItem) {
+    if (historyClickTimer.current) window.clearTimeout(historyClickTimer.current)
+    historyClickTimer.current = window.setTimeout(() => {
+      selectHistoryItem(item)
+      historyClickTimer.current = null
+    }, 220)
+  }
+
+  function handleHistoryDoubleClick(item: GeneratedItem) {
+    if (historyClickTimer.current) window.clearTimeout(historyClickTimer.current)
+    historyClickTimer.current = null
+    selectHistoryItem(item)
+    setHistoryPreviewOpen(true)
+  }
+
+  function navigateHistory(direction: -1 | 1) {
+    const currentIndex = generatedTools.findIndex((item) => item.id === selectedHistoryId)
+    const nextIndex = currentIndex + direction
+    if (nextIndex < 0 || nextIndex >= generatedTools.length) return
+    selectHistoryItem(generatedTools[nextIndex])
+  }
+
+  function updateComparison(clientX: number) {
+    const rect = imageFrameRef.current?.getBoundingClientRect()
+    if (!rect) return
+    setComparisonPosition(Math.max(0, Math.min(100, ((clientX - rect.left) / rect.width) * 100)))
+  }
+
+  function handleComparisonDown(event: ReactPointerEvent<HTMLDivElement>) {
+    event.stopPropagation()
+    event.currentTarget.setPointerCapture(event.pointerId)
+    updateComparison(event.clientX)
+  }
+
+  function handleComparisonMove(event: ReactPointerEvent<HTMLDivElement>) {
+    if (!event.currentTarget.hasPointerCapture(event.pointerId)) return
+    event.stopPropagation()
+    updateComparison(event.clientX)
+  }
+
+  async function submitGeneration(sourceUrl: string, prompt: string, label: string) {
+    const response = await fetch("/api/runninghub/generate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ prompt, imageUrls: referenceImageUrl ? [sourceUrl, referenceImageUrl] : [sourceUrl], aspectRatio: "4:3", resolution: "1k" }),
+    })
+    const task = await response.json()
+    if (!response.ok) throw new Error(task.error || "生成任务提交失败")
+    const resultUrl = await waitForTask(task.taskId)
+    return { id: task.taskId as string, label, url: resultUrl }
+  }
+
   async function generate() {
     if (isGenerating) return
     const label = editorTools.find((tool) => tool.id === activeTool)?.label ?? "AI 编辑"
@@ -462,31 +531,54 @@ export function AiEditModal({ onClose }: { onClose: () => void }) {
     if (!description.trim()) return flash("请输入替换描述")
     if (isUploadingReference) return flash("参考图片仍在上传")
     setIsGenerating(true)
+    setShowGenerationCount(false)
+    setGenerationProgress({ completed: 0, total: generationCount })
     try {
       const sourceUrl = await getOriginalImageUrl()
       const targetHint = smartSelection?.label ? `目标对象是${smartSelection.label}。` : "请根据文字描述识别需要替换的对象。"
       const referenceHint = referenceImageUrl ? "第二张图片仅作为替换对象的外观、材质和风格参考。" : "请根据文字描述完成修改。"
       const prompt = `请编辑第一张室内空间图片。${targetHint}修改要求：${description.trim()}。${referenceHint}只修改目标对象，严格保留原图其他区域的构图、空间结构、视角、光影和色彩，不要添加文字或说明。`
-      const response = await fetch("/api/runninghub/generate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt, imageUrls: referenceImageUrl ? [sourceUrl, referenceImageUrl] : [sourceUrl], aspectRatio: "4:3", resolution: "1k" }),
-      })
-      const task = await response.json()
-      if (!response.ok) throw new Error(task.error || "生成任务提交失败")
-      const resultUrl = await waitForTask(task.taskId)
-      setGeneratedImageUrl(resultUrl)
-      setGeneratedTools((items) => [{ label, url: resultUrl }, ...items].slice(0, 4))
-      flash(`${label}方案已生成`)
+      let cursor = 0
+      let completed = 0
+      let failed = 0
+      const worker = async () => {
+        while (cursor < generationCount) {
+          cursor += 1
+          try {
+            const item = await submitGeneration(sourceUrl, prompt, label)
+            setGeneratedTools((items) => [item, ...items].slice(0, 12))
+            selectHistoryItem(item)
+          } catch {
+            failed += 1
+          } finally {
+            completed += 1
+            setGenerationProgress({ completed, total: generationCount })
+          }
+        }
+      }
+      await Promise.all(Array.from({ length: Math.min(2, generationCount) }, () => worker()))
+      flash(failed ? `完成 ${generationCount - failed} 张，失败 ${failed} 张` : `${generationCount} 张方案已生成`)
     } catch (error) {
-      flash(error instanceof Error ? error.message : "生成失败，请重试")
+      flash(error instanceof Error ? error.message : "生成准备失败，请重试")
     } finally {
       setIsGenerating(false)
+      setGenerationProgress({ completed: 0, total: 0 })
     }
   }
 
   const hasSelection = Boolean(smartSelection || brushStrokes.length || lassoPoints.length)
   const selectionHint = eraserActive ? "按住并涂抹，擦除已选择的区域" : regionMode === "smart" ? "点击桌子、沙发等物体进行智能选择" : regionMode === "brush" ? "按住并涂抹要编辑的区域" : "沿对象边缘自由圈选"
+  const selectedHistoryIndex = generatedTools.findIndex((item) => item.id === selectedHistoryId)
+  const selectedHistoryItem = selectedHistoryIndex >= 0 ? generatedTools[selectedHistoryIndex] : null
+
+  useEffect(() => {
+    if (!historyPreviewOpen) return
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setHistoryPreviewOpen(false)
+    }
+    window.addEventListener("keydown", closeOnEscape)
+    return () => window.removeEventListener("keydown", closeOnEscape)
+  }, [historyPreviewOpen])
 
   return (
     <>
@@ -631,16 +723,43 @@ export function AiEditModal({ onClose }: { onClose: () => void }) {
             {selectedModel.recommended && <span className="rounded bg-[var(--color-zhimo-teal)]/15 px-1.5 py-0.5 text-[8px] text-[var(--color-zhimo-teal)]">推荐</span>}
             <ChevronDown className={`size-3.5 shrink-0 text-neutral-500 transition-transform ${showModelPicker ? "rotate-180" : ""}`} />
           </button>
-          <button
-            onClick={generate}
-            disabled={isGenerating}
-            className="w-full rounded-lg bg-neutral-200 py-2.5 text-center text-sm font-medium text-neutral-900 transition-colors hover:bg-white disabled:cursor-wait disabled:opacity-60"
-          >
-            <span className="flex items-center justify-center gap-2">
-              {isGenerating && <LoaderCircle className="size-4 animate-spin" />}
-              {isGenerating ? "正在生成" : "立即生成"}
-            </span>
-          </button>
+          <div className="relative flex gap-1.5">
+            {showGenerationCount && (
+              <>
+                <button aria-label="关闭生成数量菜单" className="fixed inset-0 z-20 cursor-default" onClick={() => setShowGenerationCount(false)} />
+                <div className="absolute bottom-[calc(100%+6px)] right-0 z-30 flex w-12 flex-col overflow-hidden rounded-lg border border-[var(--color-panel-line)] bg-[#202222] p-1 shadow-xl">
+                  {([1, 2, 4] as GenerationCount[]).map((count) => (
+                    <button
+                      key={count}
+                      onClick={() => { setGenerationCount(count); setShowGenerationCount(false) }}
+                      className={`rounded-md py-1.5 text-xs transition-colors ${generationCount === count ? "bg-[var(--color-zhimo-teal)]/15 text-[var(--color-zhimo-teal)]" : "text-neutral-300 hover:bg-white/5"}`}
+                    >
+                      {count}x
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
+            <button
+              onClick={generate}
+              disabled={isGenerating}
+              className="flex-1 rounded-lg bg-neutral-200 py-2.5 text-center text-sm font-medium text-neutral-900 transition-colors hover:bg-white disabled:cursor-wait disabled:opacity-60"
+            >
+              <span className="flex items-center justify-center gap-2">
+                {isGenerating && <LoaderCircle className="size-4 animate-spin" />}
+                {isGenerating ? `正在生成 ${generationProgress.completed}/${generationProgress.total}` : "立即生成"}
+              </span>
+            </button>
+            <button
+              onClick={() => setShowGenerationCount((value) => !value)}
+              disabled={isGenerating}
+              aria-label="选择生成数量"
+              aria-expanded={showGenerationCount}
+              className="w-12 rounded-lg border border-[var(--color-panel-line)] bg-[var(--color-panel-soft)] text-xs font-semibold text-neutral-200 transition-colors hover:border-neutral-500 hover:bg-[#303232] disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {generationCount}x
+            </button>
+          </div>
         </div>
       </div>
 
@@ -699,15 +818,45 @@ export function AiEditModal({ onClose }: { onClose: () => void }) {
           style={{ transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom / 100})` }}
         >
           <Image
-            src={generatedImageUrl || "/images/living-room.png"}
-            alt="现代客厅编辑预览"
+            src="/images/living-room.png"
+            alt="现代客厅原图"
             width={760}
             height={620}
             draggable={false}
             className="max-h-[calc(86vh-108px)] h-auto w-[min(48vw,680px)] rounded-sm object-contain"
-            unoptimized={Boolean(generatedImageUrl)}
             priority
           />
+          {generatedImageUrl && (
+            <Image
+              src={generatedImageUrl}
+              alt="AI 生成结果"
+              fill
+              draggable={false}
+              sizes="(max-width: 1280px) 48vw, 680px"
+              className="rounded-sm object-fill"
+              style={{ clipPath: `inset(0 ${100 - comparisonPosition}% 0 0)` }}
+              unoptimized
+            />
+          )}
+          {generatedImageUrl && (
+            <>
+              <span className="pointer-events-none absolute left-3 top-3 z-20 rounded bg-black/65 px-2 py-1 text-[10px] text-white">生成图</span>
+              <span className="pointer-events-none absolute right-3 top-3 z-20 rounded bg-black/65 px-2 py-1 text-[10px] text-white">原图</span>
+              <div
+                className="absolute inset-y-0 z-30 w-8 -translate-x-1/2 cursor-ew-resize touch-none"
+                style={{ left: `${comparisonPosition}%` }}
+                onPointerDown={handleComparisonDown}
+                onPointerMove={handleComparisonMove}
+                onPointerUp={(event) => event.currentTarget.releasePointerCapture(event.pointerId)}
+                aria-label="拖动查看生成图与原图对比"
+              >
+                <div className="pointer-events-none absolute inset-y-0 left-1/2 w-px bg-white shadow-[0_0_4px_rgba(0,0,0,.8)]" />
+                <div className="pointer-events-none absolute left-1/2 top-1/2 flex size-8 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-white/70 bg-neutral-900/90 text-white shadow-lg">
+                  <ChevronLeft className="size-3" /><ChevronRight className="size-3" />
+                </div>
+              </div>
+            </>
+          )}
           {previewColor && (
             <div
               className="pointer-events-none absolute left-[26%] top-[64%] h-[16%] w-[46%] rounded-sm opacity-80 mix-blend-multiply ring-2 ring-[var(--color-zhimo-teal)]"
@@ -846,8 +995,10 @@ export function AiEditModal({ onClose }: { onClose: () => void }) {
             {generatedTools.map((item, index) => (
               <button
                 key={`${item.url}-${index}`}
-                onClick={() => setGeneratedImageUrl(item.url)}
-                className="overflow-hidden rounded-lg border border-[var(--color-panel-line)] bg-[var(--color-panel-soft)] text-left"
+                onClick={() => handleHistoryClick(item)}
+                onDoubleClick={() => handleHistoryDoubleClick(item)}
+                title="单击切换到画布，双击打开大图预览"
+                className={`overflow-hidden rounded-lg border bg-[var(--color-panel-soft)] text-left transition ${selectedHistoryId === item.id ? "border-[var(--color-zhimo-teal)] ring-1 ring-[var(--color-zhimo-teal)]/40" : "border-[var(--color-panel-line)] hover:border-white/25"}`}
               >
                 <Image src={item.url} alt={item.label} width={180} height={100} unoptimized className="h-20 w-full object-cover" />
                 <span className="flex items-center justify-between px-2 py-1.5 text-[10px] text-neutral-300">
@@ -875,14 +1026,40 @@ export function AiEditModal({ onClose }: { onClose: () => void }) {
         </button>
         <div className="relative" onClick={(event) => event.stopPropagation()}>
           <Image
-            src={generatedImageUrl || "/images/living-room.png"}
-            alt="当前图片全屏预览"
+            src="/images/living-room.png"
+            alt="原图全屏预览"
             width={1520}
             height={1240}
             className="h-auto max-h-[92vh] w-auto max-w-[96vw] object-contain"
-            unoptimized={Boolean(generatedImageUrl)}
             priority
           />
+          {generatedImageUrl && (
+            <Image
+              src={generatedImageUrl}
+              alt="生成图全屏对比"
+              fill
+              sizes="96vw"
+              className="object-fill"
+              style={{ clipPath: `inset(0 ${100 - comparisonPosition}% 0 0)` }}
+              unoptimized
+            />
+          )}
+          {generatedImageUrl && (
+            <>
+              <span className="pointer-events-none absolute left-4 top-4 z-10 rounded bg-black/65 px-2.5 py-1 text-xs text-white">生成图</span>
+              <span className="pointer-events-none absolute right-4 top-4 z-10 rounded bg-black/65 px-2.5 py-1 text-xs text-white">原图</span>
+              <div className="pointer-events-none absolute inset-y-0 z-10 w-px bg-white" style={{ left: `${comparisonPosition}%` }} />
+              <input
+                type="range"
+                min="0"
+                max="100"
+                value={comparisonPosition}
+                onChange={(event) => setComparisonPosition(Number(event.target.value))}
+                className="absolute inset-0 z-20 size-full cursor-ew-resize opacity-0"
+                aria-label="拖动查看生成图与原图对比"
+              />
+            </>
+          )}
           {previewColor && (
             <div
               className="pointer-events-none absolute left-[26%] top-[64%] h-[16%] w-[46%] rounded-sm opacity-80 mix-blend-multiply ring-2 ring-[var(--color-zhimo-teal)]"
@@ -893,6 +1070,47 @@ export function AiEditModal({ onClose }: { onClose: () => void }) {
         <div className="absolute bottom-5 left-1/2 -translate-x-1/2 rounded-full bg-white/10 px-4 py-2 text-xs text-white/70">
           当前图片 · 点击空白处退出
         </div>
+      </div>,
+      document.body,
+    )}
+    {historyPreviewOpen && selectedHistoryItem && typeof document !== "undefined" && createPortal(
+      <div
+        className="fixed inset-0 z-[110] flex items-center justify-center bg-black/95"
+        role="dialog"
+        aria-modal="true"
+        aria-label="生成历史大图预览"
+        onClick={() => setHistoryPreviewOpen(false)}
+      >
+        <button onClick={() => setHistoryPreviewOpen(false)} className="absolute right-6 top-6 z-20 flex size-10 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20" aria-label="关闭预览">
+          <X className="size-6" />
+        </button>
+        <button
+          onClick={(event) => { event.stopPropagation(); navigateHistory(-1) }}
+          disabled={selectedHistoryIndex <= 0}
+          className="absolute left-6 z-20 flex size-11 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20 disabled:cursor-not-allowed disabled:opacity-25"
+          aria-label="上一张"
+        >
+          <ChevronLeft className="size-7" />
+        </button>
+        <div className="relative" onClick={(event) => event.stopPropagation()}>
+          <Image src={selectedHistoryItem.url} alt={selectedHistoryItem.label} width={1520} height={1240} unoptimized className="h-auto max-h-[88vh] w-auto max-w-[86vw] object-contain" priority />
+        </div>
+        <button
+          onClick={(event) => { event.stopPropagation(); navigateHistory(1) }}
+          disabled={selectedHistoryIndex >= generatedTools.length - 1}
+          className="absolute right-6 z-20 flex size-11 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20 disabled:cursor-not-allowed disabled:opacity-25"
+          aria-label="下一张"
+        >
+          <ChevronRight className="size-7" />
+        </button>
+        <a
+          href={`/api/runninghub/download?url=${encodeURIComponent(selectedHistoryItem.url)}`}
+          onClick={(event) => event.stopPropagation()}
+          className="absolute bottom-6 right-6 z-20 flex items-center gap-2 rounded-lg bg-white px-4 py-2 text-sm font-medium text-neutral-900 hover:bg-neutral-200"
+        >
+          <Download className="size-4" />下载图片
+        </a>
+        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 text-xs text-white/60">{selectedHistoryIndex + 1} / {generatedTools.length}</div>
       </div>,
       document.body,
     )}
