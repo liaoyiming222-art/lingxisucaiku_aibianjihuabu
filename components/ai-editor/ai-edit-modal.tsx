@@ -44,8 +44,8 @@ type EditorSnapshot = {
 }
 
 const generationModels = [
-  { id: "g2-stable", name: "全能图片 G2-官方稳定版", description: "质量稳定，适合精细局部修改", recommended: true },
-  { id: "g2-fast", name: "全能图片 G2-快速版", description: "生成更快，适合方案探索" },
+  { id: "g2-fast", name: "全能图片 G2-快速版", description: "已接入 RunningHub，生成更快", recommended: true },
+  { id: "g2-stable", name: "全能图片 G2-官方稳定版", description: "质量稳定，适合精细局部修改" },
   { id: "v2-stable", name: "全能图片 V2-官方稳定版", description: "风格表现均衡" },
   { id: "seedream-pro", name: "Seedream 5.0 Pro", description: "高质量空间与材质表现" },
   { id: "seedream-lite", name: "Seedream 5.0 Lite", description: "轻量快速，消耗更低" },
@@ -54,6 +54,7 @@ const generationModels = [
 
 type MaterialPreviewState = { name: string; top: number }
 type UploadedMaterial = { name: string; url: string }
+type GeneratedItem = { label: string; url: string }
 
 function materialVariants(material: string) {
   const isWood = material.includes("木")
@@ -124,11 +125,16 @@ export function AiEditModal({ onClose }: { onClose: () => void }) {
   const [eraserStrokes, setEraserStrokes] = useState<Point[][]>([])
   const [eraserActive, setEraserActive] = useState(false)
   const [isGenerating, setIsGenerating] = useState(false)
-  const [generatedTools, setGeneratedTools] = useState<string[]>([])
+  const [generatedTools, setGeneratedTools] = useState<GeneratedItem[]>([])
   const [selectedModel, setSelectedModel] = useState(generationModels[0])
   const [showModelPicker, setShowModelPicker] = useState(false)
   const [materialPreview, setMaterialPreview] = useState<MaterialPreviewState | null>(null)
   const [uploadedMaterials, setUploadedMaterials] = useState<UploadedMaterial[]>([])
+  const [referencePreview, setReferencePreview] = useState<string | null>(null)
+  const [referenceImageUrl, setReferenceImageUrl] = useState<string | null>(null)
+  const [isUploadingReference, setIsUploadingReference] = useState(false)
+  const [originalImageUrl, setOriginalImageUrl] = useState<string | null>(null)
+  const [generatedImageUrl, setGeneratedImageUrl] = useState<string | null>(null)
   const [toast, setToast] = useState<string | null>(null)
 
   function flash(msg: string) {
@@ -384,15 +390,99 @@ export function AiEditModal({ onClose }: { onClose: () => void }) {
     flash(eraserActive ? "已擦除部分选区" : regionMode === "brush" ? "涂抹选区已完成" : "套索选区已闭合")
   }
 
-  function generate() {
+  async function uploadToRunningHub(file: File) {
+    const formData = new FormData()
+    formData.append("file", file)
+    const response = await fetch("/api/runninghub/upload", { method: "POST", body: formData })
+    const data = await response.json()
+    if (!response.ok) throw new Error(data.error || "图片上传失败")
+    return data.url as string
+  }
+
+  async function selectReferenceImage(file: File) {
+    if (!file.type.match(/^image\/(jpeg|png|webp)$/)) return flash("仅支持 JPG、PNG、WebP")
+    if (file.size > 10 * 1024 * 1024) return flash("参考图片不能超过 10MB")
+    if (referencePreview) URL.revokeObjectURL(referencePreview)
+    setReferencePreview(URL.createObjectURL(file))
+    setReferenceImageUrl(null)
+    setIsUploadingReference(true)
+    try {
+      const url = await uploadToRunningHub(file)
+      setReferenceImageUrl(url)
+      flash("参考图片上传完成")
+    } catch (error) {
+      flash(error instanceof Error ? error.message : "参考图片上传失败")
+    } finally {
+      setIsUploadingReference(false)
+    }
+  }
+
+  async function getOriginalImageUrl() {
+    if (originalImageUrl) return originalImageUrl
+    const response = await fetch("/images/living-room.png")
+    if (!response.ok) throw new Error("原图读取失败")
+    const blob = await response.blob()
+    const url = await uploadToRunningHub(new File([blob], "living-room.png", { type: blob.type || "image/png" }))
+    setOriginalImageUrl(url)
+    return url
+  }
+
+  async function waitForTask(taskId: string) {
+    for (let attempt = 0; attempt < 100; attempt += 1) {
+      await new Promise((resolve) => window.setTimeout(resolve, 3000))
+      const response = await fetch("/api/runninghub/status", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ taskId }),
+      })
+      const data = await response.json()
+      if (!response.ok) throw new Error(data.error || "任务状态查询失败")
+      if (data.status === "FAILED") throw new Error(data.errorMessage || "模型生成失败")
+      if (data.status === "SUCCESS") {
+        const result = data.results?.find((item: { url?: string }) => item.url)?.url
+        if (!result) throw new Error("任务成功但没有返回图片")
+        return result as string
+      }
+    }
+    throw new Error("生成超时，请稍后重试")
+  }
+
+  async function generate() {
     if (isGenerating) return
     const label = editorTools.find((tool) => tool.id === activeTool)?.label ?? "AI 编辑"
+    if (activeTool !== "inpaint" || selectedModel.id !== "g2-fast") {
+      setIsGenerating(true)
+      window.setTimeout(() => {
+        setIsGenerating(false)
+        flash(`${label}演示方案已生成`)
+      }, 1400)
+      return
+    }
+    if (!hasSelection) return flash("请先创建智能、涂抹或套索选区")
+    if (!description.trim()) return flash("请输入替换描述")
+    if (isUploadingReference) return flash("参考图片仍在上传")
+    if (!referenceImageUrl) return flash("请先上传替换参考图片")
     setIsGenerating(true)
-    window.setTimeout(() => {
-      setIsGenerating(false)
-      setGeneratedTools((items) => [label, ...items].slice(0, 4))
+    try {
+      const sourceUrl = await getOriginalImageUrl()
+      const targetHint = smartSelection?.label ? `目标对象是${smartSelection.label}。` : "请根据文字描述识别需要替换的对象。"
+      const prompt = `请编辑第一张室内空间图片。${targetHint}修改要求：${description.trim()}。第二张图片仅作为替换对象的外观、材质和风格参考。只修改目标对象，严格保留原图其他区域的构图、空间结构、视角、光影和色彩，不要添加文字或说明。`
+      const response = await fetch("/api/runninghub/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prompt, imageUrls: [sourceUrl, referenceImageUrl], aspectRatio: "4:3", resolution: "1k" }),
+      })
+      const task = await response.json()
+      if (!response.ok) throw new Error(task.error || "生成任务提交失败")
+      const resultUrl = await waitForTask(task.taskId)
+      setGeneratedImageUrl(resultUrl)
+      setGeneratedTools((items) => [{ label, url: resultUrl }, ...items].slice(0, 4))
       flash(`${label}方案已生成`)
-    }, 1400)
+    } catch (error) {
+      flash(error instanceof Error ? error.message : "生成失败，请重试")
+    } finally {
+      setIsGenerating(false)
+    }
   }
 
   const hasSelection = Boolean(smartSelection || brushStrokes.length || lassoPoints.length)
@@ -457,7 +547,9 @@ export function AiEditModal({ onClose }: { onClose: () => void }) {
               setRegionMode={changeRegionMode}
               description={description}
               setDescription={setDescription}
-              onUpload={() => flash("请选择替换参考图")}
+              referencePreview={referencePreview}
+              isUploading={isUploadingReference}
+              onUpload={selectReferenceImage}
             />
           )}
           {activeTool === "detail" && <DetailPanel />}
@@ -608,12 +700,13 @@ export function AiEditModal({ onClose }: { onClose: () => void }) {
           style={{ transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom / 100})` }}
         >
           <Image
-            src="/images/living-room.png"
+            src={generatedImageUrl || "/images/living-room.png"}
             alt="现代客厅编辑预览"
             width={760}
             height={620}
             draggable={false}
             className="max-h-[calc(86vh-108px)] h-auto w-[min(48vw,680px)] rounded-sm object-contain"
+            unoptimized={Boolean(generatedImageUrl)}
             priority
           />
           {previewColor && (
@@ -751,14 +844,15 @@ export function AiEditModal({ onClose }: { onClose: () => void }) {
           </div>
         ) : (
           <div className="mt-3 flex flex-col gap-2 overflow-y-auto">
-            {generatedTools.map((label, index) => (
+            {generatedTools.map((item, index) => (
               <button
-                key={`${label}-${index}`}
+                key={`${item.url}-${index}`}
+                onClick={() => setGeneratedImageUrl(item.url)}
                 className="overflow-hidden rounded-lg border border-[var(--color-panel-line)] bg-[var(--color-panel-soft)] text-left"
               >
-                <Image src="/images/living-room.png" alt={label} width={180} height={100} className="h-20 w-full object-cover" />
+                <Image src={item.url} alt={item.label} width={180} height={100} unoptimized className="h-20 w-full object-cover" />
                 <span className="flex items-center justify-between px-2 py-1.5 text-[10px] text-neutral-300">
-                  <b>{label}</b><em className="not-italic text-[var(--color-zhimo-teal)]">新</em>
+                  <b>{item.label}</b><em className="not-italic text-[var(--color-zhimo-teal)]">新</em>
                 </span>
               </button>
             ))}
@@ -782,11 +876,12 @@ export function AiEditModal({ onClose }: { onClose: () => void }) {
         </button>
         <div className="relative" onClick={(event) => event.stopPropagation()}>
           <Image
-            src="/images/living-room.png"
+            src={generatedImageUrl || "/images/living-room.png"}
             alt="当前图片全屏预览"
             width={1520}
             height={1240}
             className="h-auto max-h-[92vh] w-auto max-w-[96vw] object-contain"
+            unoptimized={Boolean(generatedImageUrl)}
             priority
           />
           {previewColor && (
@@ -1015,8 +1110,16 @@ function InpaintPanel({
   setRegionMode,
   description,
   setDescription,
+  referencePreview,
+  isUploading,
   onUpload,
-}: RegionProps & { description: string; setDescription: (value: string) => void; onUpload: () => void }) {
+}: RegionProps & {
+  description: string
+  setDescription: (value: string) => void
+  referencePreview: string | null
+  isUploading: boolean
+  onUpload: (file: File) => void
+}) {
   return (
     <div className="flex flex-col gap-5">
       <RegionSelect value={regionMode} onChange={setRegionMode} />
@@ -1032,11 +1135,31 @@ function InpaintPanel({
       </div>
       <div>
         <p className="mb-2 text-sm font-medium text-neutral-200">替换图片</p>
-        <button onClick={onUpload} className="flex h-28 w-full flex-col items-center justify-center gap-2 rounded-lg border border-dashed border-neutral-600 bg-[var(--color-panel-soft)] text-xs text-neutral-300 transition-colors hover:border-[var(--color-zhimo-teal)] hover:bg-[var(--color-zhimo-teal)]/5 hover:text-neutral-100">
-          <Upload className="size-5" />
-          <span>上传图片替换选中区域</span>
-          <span className="text-[10px] text-neutral-500">支持 JPG、PNG，作为替换内容参考</span>
-        </button>
+        <input
+          id="inpaint-reference-image"
+          type="file"
+          accept="image/jpeg,image/png,image/webp"
+          className="hidden"
+          onChange={(event) => {
+            const file = event.target.files?.[0]
+            if (file) onUpload(file)
+            event.target.value = ""
+          }}
+        />
+        <label htmlFor="inpaint-reference-image" className="relative flex h-28 w-full cursor-pointer flex-col items-center justify-center gap-2 overflow-hidden rounded-lg border border-dashed border-neutral-600 bg-[var(--color-panel-soft)] text-xs text-neutral-300 transition-colors hover:border-[var(--color-zhimo-teal)] hover:bg-[var(--color-zhimo-teal)]/5 hover:text-neutral-100">
+          {referencePreview ? (
+            <>
+              <Image src={referencePreview} alt="替换参考图预览" fill unoptimized className="object-cover opacity-55" />
+              <span className="relative z-10 rounded bg-black/70 px-2 py-1">{isUploading ? "正在上传…" : "点击更换参考图"}</span>
+            </>
+          ) : (
+            <>
+              <Upload className="size-5" />
+              <span>上传图片作为替换参考</span>
+              <span className="text-[10px] text-neutral-500">支持 JPG、PNG、WebP，最大 10MB</span>
+            </>
+          )}
+        </label>
       </div>
     </div>
   )
