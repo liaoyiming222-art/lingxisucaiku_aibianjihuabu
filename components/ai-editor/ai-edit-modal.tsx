@@ -404,8 +404,8 @@ export function AiEditModal({ onClose }: { onClose: () => void }) {
       ref={editorRef}
       className="fixed inset-x-[5vw] bottom-[5vh] top-[9vh] z-50 flex overflow-hidden rounded-xl border border-white/10 bg-[var(--color-shell)]/95 shadow-2xl backdrop-blur-sm"
     >
-      {/* 左侧工具栏：仅缩小尺寸，不修改工具内容 */}
-      <div className="flex w-[76px] shrink-0 flex-col items-center gap-0.5 overflow-y-auto border-r border-[var(--color-panel-line)] bg-[var(--color-panel)] py-2.5">
+      {/* 左侧工具栏 */}
+      <div className="flex w-[88px] shrink-0 flex-col items-center gap-1 overflow-y-auto border-r border-[var(--color-panel-line)] bg-[var(--color-panel)] py-3">
         {editorTools.map((tool) => {
           const active = tool.id === activeTool
           return (
@@ -416,13 +416,13 @@ export function AiEditModal({ onClose }: { onClose: () => void }) {
                 setShowMaterialLib(false)
                 clearSelection()
               }}
-              className={`flex w-[62px] flex-col items-center gap-1 rounded-lg py-2 text-[10px] transition-colors ${
+              className={`flex w-[72px] flex-col items-center gap-1.5 rounded-lg border py-2.5 text-[11px] transition-colors ${
                 active
-                  ? "bg-[var(--color-panel-soft)] text-[var(--color-zhimo-teal)]"
-                  : "text-neutral-400 hover:bg-white/5 hover:text-neutral-200"
+                  ? "border-[var(--color-zhimo-teal)]/35 bg-[var(--color-zhimo-teal)]/10 text-[var(--color-zhimo-teal)]"
+                  : "border-transparent text-neutral-300 hover:border-white/10 hover:bg-white/5 hover:text-neutral-100"
               }`}
             >
-              <tool.icon className="size-[19px]" />
+              <tool.icon className="size-6" strokeWidth={1.8} />
               {tool.label}
             </button>
           )
@@ -430,7 +430,7 @@ export function AiEditModal({ onClose }: { onClose: () => void }) {
       </div>
 
       {/* 参数面板：宽度和留白按知末紧凑化 */}
-      <div className="flex w-[292px] shrink-0 flex-col border-r border-[var(--color-panel-line)] bg-[var(--color-panel)]">
+      <div className="flex w-[308px] shrink-0 flex-col border-r border-[var(--color-panel-line)] bg-[var(--color-panel)]">
         <div className="flex-1 overflow-y-auto p-4">
           {activeTool === "material" && (
             <MaterialPanel
@@ -1018,21 +1018,27 @@ function InpaintPanel({
   onUpload,
 }: RegionProps & { description: string; setDescription: (value: string) => void; onUpload: () => void }) {
   return (
-    <Panel title="局部重绘" hint="选择局部区域，并描述希望替换成的内容。">
+    <div className="flex flex-col gap-5">
       <RegionSelect value={regionMode} onChange={setRegionMode} />
-      <FieldLabel>替换描述</FieldLabel>
-      <textarea
-        value={description}
-        onChange={(event) => setDescription(event.target.value)}
-        rows={3}
-        placeholder="例如：将单椅替换成圆润的米色休闲椅"
-        className="panel-input resize-none"
-      />
-      <FieldLabel>替换图片</FieldLabel>
-      <button onClick={onUpload} className="flex h-24 w-full flex-col items-center justify-center gap-2 rounded-lg border border-dashed border-[var(--color-panel-line)] bg-[var(--color-panel-soft)] text-xs text-neutral-400 hover:border-neutral-500">
-        <Upload className="size-5" />上传图片替换选中区域
-      </button>
-    </Panel>
+      <div>
+        <p className="mb-2 text-sm font-medium text-neutral-200">替换描述</p>
+        <textarea
+          value={description}
+          onChange={(event) => setDescription(event.target.value)}
+          rows={3}
+          placeholder="描述需要替换的对象和目标效果，例如：将单椅替换为圆润的米色休闲椅"
+          className="w-full resize-none rounded-lg border border-neutral-600 bg-[var(--color-panel-soft)] p-3 text-sm leading-5 text-neutral-100 outline-none transition-colors placeholder:text-neutral-400 focus:border-[var(--color-zhimo-teal)]"
+        />
+      </div>
+      <div>
+        <p className="mb-2 text-sm font-medium text-neutral-200">替换图片</p>
+        <button onClick={onUpload} className="flex h-28 w-full flex-col items-center justify-center gap-2 rounded-lg border border-dashed border-neutral-600 bg-[var(--color-panel-soft)] text-xs text-neutral-300 transition-colors hover:border-[var(--color-zhimo-teal)] hover:bg-[var(--color-zhimo-teal)]/5 hover:text-neutral-100">
+          <Upload className="size-5" />
+          <span>上传图片替换选中区域</span>
+          <span className="text-[10px] text-neutral-500">支持 JPG、PNG，作为替换内容参考</span>
+        </button>
+      </div>
+    </div>
   )
 }
 
