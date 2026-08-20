@@ -95,7 +95,19 @@ function materialVariants(material: string) {
   }))
 }
 
-export function AiEditModal({ onClose }: { onClose: () => void }) {
+export function AiEditModal({
+  onClose,
+  sourceImage = "/images/living-room.png",
+  sourceImageAlt = "现代客厅",
+  sourceImageWidth = 760,
+  sourceImageHeight = 620,
+}: {
+  onClose: () => void
+  sourceImage?: string
+  sourceImageAlt?: string
+  sourceImageWidth?: number
+  sourceImageHeight?: number
+}) {
   const editorRef = useRef<HTMLDivElement>(null)
   const imageFrameRef = useRef<HTMLDivElement>(null)
   const dragStart = useRef({ pointerX: 0, pointerY: 0, panX: 0, panY: 0 })
@@ -430,10 +442,11 @@ export function AiEditModal({ onClose }: { onClose: () => void }) {
 
   async function getOriginalImageUrl() {
     if (originalImageUrl) return originalImageUrl
-    const response = await fetch("/images/living-room.png")
+    const response = await fetch(sourceImage)
     if (!response.ok) throw new Error("原图读取失败")
     const blob = await response.blob()
-    const url = await uploadToRunningHub(new File([blob], "living-room.png", { type: blob.type || "image/png" }))
+    const filename = sourceImage.split("/").pop() || "source-image.png"
+    const url = await uploadToRunningHub(new File([blob], filename, { type: blob.type || "image/png" }))
     setOriginalImageUrl(url)
     return url
   }
@@ -818,10 +831,10 @@ export function AiEditModal({ onClose }: { onClose: () => void }) {
           style={{ transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom / 100})` }}
         >
           <Image
-            src="/images/living-room.png"
-            alt="现代客厅原图"
-            width={760}
-            height={620}
+            src={sourceImage}
+            alt={`${sourceImageAlt}原图`}
+            width={sourceImageWidth}
+            height={sourceImageHeight}
             draggable={false}
             className="max-h-[calc(86vh-108px)] h-auto w-[min(48vw,680px)] rounded-sm object-contain"
             priority
@@ -1026,10 +1039,10 @@ export function AiEditModal({ onClose }: { onClose: () => void }) {
         </button>
         <div className="relative" onClick={(event) => event.stopPropagation()}>
           <Image
-            src="/images/living-room.png"
-            alt="原图全屏预览"
-            width={1520}
-            height={1240}
+            src={sourceImage}
+            alt={`${sourceImageAlt}原图全屏预览`}
+            width={sourceImageWidth * 2}
+            height={sourceImageHeight * 2}
             className="h-auto max-h-[92vh] w-auto max-w-[96vw] object-contain"
             priority
           />

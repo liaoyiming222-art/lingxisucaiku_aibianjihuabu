@@ -89,7 +89,13 @@ export default function Page() {
       )}
 
       {showEditor && (
-        <AiEditModal onClose={() => setShowEditor(false)} />
+        <AiEditModal
+          onClose={() => setShowEditor(false)}
+          sourceImage="/images/kids-shelf.png"
+          sourceImageAlt="撞色实木儿童杂物架"
+          sourceImageWidth={1024}
+          sourceImageHeight={1024}
+        />
       )}
     </div>
   )
