@@ -104,6 +104,7 @@ export default function EditorPage() {
           >
             <ArrowLeft className="size-4" />
           </button>
+          <img src="/icon.svg" width={30} height={30} alt="灵犀" className="size-[30px] shrink-0" />
           <span className="text-base font-semibold text-white">AI改图</span>
           <span className="h-4 w-px bg-white/15" />
           <button className="flex items-center gap-1 rounded-md bg-[var(--color-panel-soft)] px-3 py-1.5 text-sm text-neutral-300">

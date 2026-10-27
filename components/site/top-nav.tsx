@@ -3,9 +3,7 @@ import { Search, ChevronDown, Coins, Crown, Upload } from "lucide-react"
 export function TopNav() {
   return (
     <header className="flex h-16 shrink-0 items-center gap-4 border-b border-black/5 bg-white px-4">
-      <div className="flex size-10 items-center justify-center rounded-xl bg-neutral-900 text-lg font-bold text-white">
-        灵
-      </div>
+      <img src="/icon.svg" width={40} height={40} alt="灵犀" className="size-10 shrink-0" />
 
       <div className="flex flex-1 items-center gap-3">
         <button className="flex items-center gap-1 rounded-full bg-neutral-100 px-4 py-2 text-sm font-medium text-neutral-700">

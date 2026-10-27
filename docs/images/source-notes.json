@@ -1,0 +1,119 @@
+{
+  "schemaVersion": 1,
+  "product": "lingxi",
+  "direction": "A：精致轻立体",
+  "baseRevision": "90c634431ed93625b5a302db1ab519564685d710",
+  "scope": "仅品牌身份、favicon、品牌引用与展示资料；功能文件和原目录保持独立。",
+  "brand": {
+    "master": "public/icon.svg",
+    "style": "原生 SVG 几何、渐变、边缘高光及接触阴影；PNG 为同母版尺寸导出。",
+    "assets": [
+      {
+        "path": "public/icon.svg",
+        "bytes": 2398,
+        "sha256": "b2472f44844bd2374841ce353980014530a827b16a691fff86e9a2ea0508af26"
+      },
+      {
+        "path": "public/icon-light-32x32.png",
+        "bytes": 1940,
+        "sha256": "74b712887aee7b293130f0cdf3fee9ff03d73faefcc18adcb9bf24048f7cc47d",
+        "width": 32,
+        "height": 32
+      },
+      {
+        "path": "public/icon-dark-32x32.png",
+        "bytes": 1940,
+        "sha256": "74b712887aee7b293130f0cdf3fee9ff03d73faefcc18adcb9bf24048f7cc47d",
+        "width": 32,
+        "height": 32
+      },
+      {
+        "path": "public/apple-icon.png",
+        "bytes": 14768,
+        "sha256": "585ea910647ce84bf61b26cbe832fee398c99734a4865bcfad5595ee2d18e001",
+        "width": 180,
+        "height": 180
+      },
+      {
+        "path": "public/icon-128.png",
+        "bytes": 9893,
+        "sha256": "c65f4e30e741bc19c01b93fbe6114c9ba4369a7b9cd10e2e1498a67f0a6bdb1e",
+        "width": 128,
+        "height": 128
+      },
+      {
+        "path": "public/icon-512.png",
+        "bytes": 48481,
+        "sha256": "ad446bb9be948dbcceddc0e89ee7f699f5fc488b0c3c66ecd22f5a3d53c17e24",
+        "width": 512,
+        "height": 512
+      }
+    ]
+  },
+  "captureStatus": "complete",
+  "captures": [
+    {
+      "path": "docs/images/lingxi-overview.jpg",
+      "mimeType": "image/jpeg",
+      "width": 1428,
+      "height": 1000,
+      "bytes": 112545,
+      "sha256": "21025b79c9ecdd676a54ad63060c062740dfdab2d67f7b7ada0f048c6a7b795e",
+      "url": "http://127.0.0.1:4194/",
+      "state": "默认灵感图片详情与新品牌导航。"
+    },
+    {
+      "path": "docs/images/lingxi-editor.jpg",
+      "mimeType": "image/jpeg",
+      "width": 1428,
+      "height": 1000,
+      "bytes": 113255,
+      "sha256": "be5269665d6f40b5a7f73c5a0f6b45ffdd199018c7857030dda3d4e18ea40b1a",
+      "url": "http://127.0.0.1:4194/",
+      "state": "由原图片详情点击AI编辑，当前原图、工具、参数和空生成历史。"
+    },
+    {
+      "path": "docs/images/lingxi-selection.jpg",
+      "mimeType": "image/jpeg",
+      "width": 1428,
+      "height": 1000,
+      "bytes": 120904,
+      "sha256": "d7b0e5d076ce2124200b31e02cbccfa2c89b6d01ec27e98da96ce7dbbf928e3f",
+      "url": "http://127.0.0.1:4194/",
+      "state": "实际切换涂抹选择并在柜体顶边拖绘，输入虚构编辑描述，没有点击立即生成。"
+    },
+    {
+      "path": "docs/images/lingxi-selection-core.jpg",
+      "mimeType": "image/jpeg",
+      "width": 680,
+      "height": 680,
+      "bytes": 59360,
+      "sha256": "5a5289aa450f70f5d1f05d6682c469693d5d8f670877f759c907145cbfe36b06",
+      "url": "http://127.0.0.1:4194/",
+      "state": "选区状态中原图img的DOM范围直接截图，保留真实手动选区；宣传取景，不声称手机编辑界面。"
+    },
+    {
+      "path": "docs/images/lingxi-parameters-core.jpg",
+      "mimeType": "image/jpeg",
+      "width": 309,
+      "height": 860,
+      "bytes": 26559,
+      "sha256": "6806f9a627967dc3c271c837b1ee72ac5895c7a2b76356509c6820844e74d1a9",
+      "url": "http://127.0.0.1:4194/",
+      "state": "从真实桌面编辑器参数面板DOM边界直接取景，保留选区方式、描述、材质与模型；不是新增手机UI。"
+    }
+  ],
+  "limits": [
+    "只展示已有图片上下文、工具和选区，不调用模型生成。",
+    "部分局部重绘 G2-快速版有接口路径，不代表所有选项均接入。",
+    "源项目包含的样例图片沿用原型展示，不新增外部图片。"
+  ],
+  "captureDate": "2026-10-27",
+  "captureCodeState": "基线加当前未提交品牌修改；不替换截图内界面或标志。",
+  "verification": {
+    "typeScript": "node node_modules/typescript/bin/tsc --noEmit --incremental false通过",
+    "productionBuild": "next build成功；本轮新鲜构建wJRPsbHrmhaiFnNOih35S，通过next start拍摄。",
+    "ui": "1440px实际查看图库上下文、编辑器、描述和涂抹选区；未执行生成或请求服务。"
+  },
+  "pixelSizeNote": "width/height均由最终JPEG文件Pillow解码实测；截图编码尺寸与请求视口可能因浏览器截取行为不同。"
+}
