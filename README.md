@@ -6,6 +6,12 @@
 
 ![灵犀编辑界面](docs/images/lingxi-editor.jpg)
 
+## 造物集作品集展示
+
+![灵犀作品集展台](docs/portfolio-assets/hero.webp)
+
+[作品集素材说明](docs/portfolio-assets/README.md) · [manifest](docs/portfolio-assets/manifest.json)
+
 ## 当前能力
 
 - 从图库与图片详情进入编辑器，保留原始图片上下文。
