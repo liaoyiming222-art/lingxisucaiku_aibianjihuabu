@@ -1,0 +1,13 @@
+{
+  "image": {
+    "x": 722,
+    "y": 284,
+    "width": 680,
+    "height": 680
+  },
+  "code": "e324a46481e588b41da9954698fc9c3f53f39c9c",
+  "input": "public/images/kids-shelf.png",
+  "description": "将柜面改为浅色原木，保留柜体结构",
+  "manual_brush": true,
+  "generation": false
+}
