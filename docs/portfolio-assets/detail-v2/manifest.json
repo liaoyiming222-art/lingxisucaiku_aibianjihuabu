@@ -1,0 +1,50 @@
+{
+  "task_id": "detail-v2-20261104-lingxi",
+  "product_id": "lingxi",
+  "status": "blocked",
+  "repository": "https://github.com/liaoyiming222-art/lingxisucaiku_aibianjihuabu",
+  "branch": "codex/detail-v2-20261104-lingxi",
+  "capture_code_sha": "e324a46481e588b41da9954698fc9c3f53f39c9c",
+  "source_worktree": "clean, unchanged",
+  "capture_worktree": "isolated clone from specified actual source, code unmodified",
+  "date": "2026-11-04",
+  "expected_finished_images": 7,
+  "actual_finished_images": 0,
+  "images": [],
+  "evidence": [
+    {
+      "path": "evidence/fixed-detail.png",
+      "width": 1440,
+      "height": 1000,
+      "format": "png",
+      "sha256": "6dfaa052df980c2680fbcb036ad11df8af0b359617e102873bae108ebdfd5643",
+      "alt_zh": "真实默认图片详情为固定儿童收纳柜",
+      "purpose": "场景阻塞核验，不是详情成品",
+      "source_type": "actual-runtime-screenshot"
+    },
+    {
+      "path": "evidence/fixed-editor.png",
+      "width": 1440,
+      "height": 1000,
+      "format": "png",
+      "sha256": "d228a5a3b3ee40d7f3adcd09760326b67d2d2eed394487b8eb59ade6e9141c7c",
+      "alt_zh": "真实局部重绘画布仍为固定儿童收纳柜，仅有参考图上传入口",
+      "purpose": "场景阻塞核验，不是详情成品",
+      "source_type": "actual-runtime-screenshot"
+    }
+  ],
+  "checks": {
+    "evidence_dimensions_and_hashes": "passed",
+    "finished_image_readability": "not performed: scene blocked",
+    "runninghub_requests": 0
+  },
+  "blockers": [
+    "原生详情及编辑原图固定为kids-shelf.png，无替换原图UI",
+    "单椅贯穿场景无法在禁止改代码/DOM/图片响应的条件下取得"
+  ],
+  "limitations": [
+    "仅原型核验",
+    "未生成任何模型结果",
+    "不能作为7张详情成品接入"
+  ]
+}

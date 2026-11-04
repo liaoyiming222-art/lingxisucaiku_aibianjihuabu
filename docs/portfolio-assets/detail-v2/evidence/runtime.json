@@ -1,0 +1,48 @@
+{
+  "url": "http://127.0.0.1:3147",
+  "viewport": {
+    "width": 1440,
+    "height": 1000
+  },
+  "inputs": [
+    {
+      "id": "inpaint-reference-image",
+      "accept": "image/jpeg,image/png,image/webp"
+    }
+  ],
+  "images": [
+    {
+      "alt": "灵犀",
+      "src": "/icon.svg"
+    },
+    {
+      "alt": "现代客厅 · 落地窗",
+      "src": "/images/living-room.png"
+    },
+    {
+      "alt": "撞色实木儿童杂物架",
+      "src": "/images/kids-shelf.png"
+    },
+    {
+      "alt": "现代厨房 · 大理石岛台",
+      "src": "/images/kitchen.png"
+    },
+    {
+      "alt": "简约客厅设计",
+      "src": "/images/living-room.png"
+    },
+    {
+      "alt": "开放式厨房",
+      "src": "/images/kitchen.png"
+    },
+    {
+      "alt": "儿童收纳方案",
+      "src": "/images/kids-shelf.png"
+    },
+    {
+      "alt": "撞色实木儿童杂物架原图",
+      "src": "/images/kids-shelf.png"
+    }
+  ],
+  "runninghub_requests": []
+}
