@@ -1,14 +1,22 @@
 {
   "task_id": "detail-v2-20261104-lingxi",
   "product_id": "lingxi",
-  "status": "uploaded_candidates_readability_gaps",
+  "status": "revision_r1_ready_for_review",
+  "revision_task_id": "detail-v2-20261104-lingxi-r1",
+  "previous_asset_commit": "1bbc82f168032dc2f666d48782c8de52b8429342",
+  "counts": {
+    "desktop": 2,
+    "mobile": 3,
+    "shared": 4,
+    "total": 9
+  },
   "repository": "https://github.com/liaoyiming222-art/lingxisucaiku_aibianjihuabu",
   "branch": "codex/detail-v2-20261104-lingxi",
   "capture_code_sha": "e324a46481e588b41da9954698fc9c3f53f39c9c",
   "source_directory": "C:/ai应用/灵感库调研/ai-prototype",
   "source_worktree": "clean, unchanged",
   "capture_worktree": "isolated clone; code unmodified",
-  "date": "2026-11-04",
+  "date": "2026-11-05",
   "scenario_revision": "总控批准原生儿童收纳柜替代无法导入的单椅",
   "input": "../../../public/images/kids-shelf.png",
   "input_sha256": "4ee883a5f4f38c6e29c2fea87493f481c349c1f9b24ed7e29458717d1bb809a7",
@@ -23,6 +31,7 @@
       "scene": "editor-desktop",
       "source_type": "actual-runtime-crop",
       "source": "source/editor.png",
+      "source_sha256": "236c514959e4314df64bcc0d895b50b17b9d8e83b3a666a1ee6c0ac813816c6a",
       "crop": {
         "left": 0,
         "top": 0,
@@ -41,6 +50,7 @@
       "scene": "editor-mobile",
       "source_type": "actual-runtime-crop",
       "source": "source/editor.png",
+      "source_sha256": "236c514959e4314df64bcc0d895b50b17b9d8e83b3a666a1ee6c0ac813816c6a",
       "crop": {
         "left": 700,
         "top": 270,
@@ -59,6 +69,7 @@
       "scene": "mask-shared",
       "source_type": "actual-runtime-crop",
       "source": "source/mask.png",
+      "source_sha256": "5e910c34b30f8635e851d181a1af2f4a350f1d4ba49a91eabb6037f6fe3da80e",
       "crop": {
         "left": 710,
         "top": 278,
@@ -77,6 +88,7 @@
       "scene": "intent-shared",
       "source_type": "actual-runtime-crop",
       "source": "source/mask.png",
+      "source_sha256": "5e910c34b30f8635e851d181a1af2f4a350f1d4ba49a91eabb6037f6fe3da80e",
       "crop": {
         "left": 197,
         "top": 228,
@@ -95,6 +107,7 @@
       "scene": "parameters-shared",
       "source_type": "actual-runtime-crop",
       "source": "source/mask.png",
+      "source_sha256": "5e910c34b30f8635e851d181a1af2f4a350f1d4ba49a91eabb6037f6fe3da80e",
       "crop": {
         "left": 237,
         "top": 1035,
@@ -113,6 +126,7 @@
       "scene": "materials-desktop",
       "source_type": "actual-runtime-crop",
       "source": "source/materials.png",
+      "source_sha256": "de3c6f8681dc19626b74ffcb37041d55875bc77e69c6985376a49e4607dda252",
       "crop": {
         "left": 197,
         "top": 365,
@@ -124,18 +138,57 @@
     {
       "path": "lingxi-detail-materials-mobile.webp",
       "width": 900,
-      "height": 254,
+      "height": 332,
       "format": "webp",
-      "sha256": "43cca7f8b5be3d089d26f5d98c6ab858a66138b2b1eabdc9ca808a8874cc1e3b",
-      "alt_zh": "桌面材质库木材分类、条目及对应原生纹理预览",
+      "sha256": "3586560761fd33c1b100cafdc75dfb7450507e90141a9959ba7dfecdd00e6d70",
+      "alt_zh": "同次悬停状态的木材分类、浅色原木与相邻深棕木纹条目",
       "scene": "materials-mobile",
       "source_type": "actual-runtime-crop",
       "source": "source/materials.png",
+      "source_sha256": "de3c6f8681dc19626b74ffcb37041d55875bc77e69c6985376a49e4607dda252",
+      "crop": {
+        "left": 208,
+        "top": 486,
+        "width": 168,
+        "height": 62
+      },
+      "limitations": "桌面交互原型；未调用模型；材质纹理为内置示意，未应用"
+    },
+    {
+      "path": "lingxi-detail-mask-controls-shared.webp",
+      "width": 900,
+      "height": 426,
+      "format": "webp",
+      "sha256": "f30159a9499513cdcc84ce03b8bc626ad3ab786d0d8926574fc0a10652494a11",
+      "alt_zh": "同次柜面手动涂抹会话的选择区域与涂抹选择绿色已选态",
+      "scene": "mask-controls-shared",
+      "source_type": "actual-runtime-crop",
+      "source": "source/mask.png",
+      "source_sha256": "5e910c34b30f8635e851d181a1af2f4a350f1d4ba49a91eabb6037f6fe3da80e",
       "crop": {
         "left": 197,
-        "top": 475,
-        "width": 710,
-        "height": 200
+        "top": 122,
+        "width": 190,
+        "height": 90
+      },
+      "limitations": "桌面交互原型；未调用模型；材质纹理为内置示意，未应用"
+    },
+    {
+      "path": "lingxi-detail-materials-preview-mobile.webp",
+      "width": 900,
+      "height": 908,
+      "format": "webp",
+      "sha256": "823cbd1fb65fbe83fe7207c5a7bf47e33fae63a8a8b1c30eb30b4e6f57e47dde",
+      "alt_zh": "浅色原木同次悬停浮层中的完整细腻哑光纹理卡片，内置参考未应用",
+      "scene": "materials-preview-mobile",
+      "source_type": "actual-runtime-crop",
+      "source": "source/materials.png",
+      "source_sha256": "de3c6f8681dc19626b74ffcb37041d55875bc77e69c6985376a49e4607dda252",
+      "crop": {
+        "left": 590,
+        "top": 530,
+        "width": 113,
+        "height": 114
       },
       "limitations": "桌面交互原型；未调用模型；材质纹理为内置示意，未应用"
     }
@@ -144,11 +197,10 @@
     "dimensions_hashes": "passed",
     "manual_brush": "actual mouse drag on cabinet top",
     "paid_requests": 0,
-    "mobile_readability": "intent and model name approx14px at288; material full popup remains too wide; see README"
+    "mobile_readability": "r1 separate continuous crops checked at288/358; controls approx15px; material labels approx20px; texture name approx20px at288"
   },
   "limitations": [
-    "材质手机版分类和完整浮层同场时关键文字不足14px",
-    "手动遮罩方图保留画布，手动工具位于图外，见整窗证据",
+    "手动模式与画布为独立真实局部；材质列表与单纹理卡分图说明同次悬停关系",
     "手机主图为画布和底部工具局部，非手机适配",
     "材质及短面板用自然高度，不填充旧比例",
     "未生成效果或伪造前后对比"

@@ -1,0 +1,143 @@
+{
+  "task_id": "detail-v2-20261104-lingxi",
+  "revision_task_id": "detail-v2-20261104-lingxi-r1",
+  "base_asset_sha": "1bbc82f168032dc2f666d48782c8de52b8429342",
+  "code_sha": "e324a46481e588b41da9954698fc9c3f53f39c9c",
+  "passed": true,
+  "finished_images": 9,
+  "retained_six": [
+    "lingxi-detail-editor-desktop.webp",
+    "lingxi-detail-editor-mobile.webp",
+    "lingxi-detail-mask-shared.webp",
+    "lingxi-detail-intent-shared.webp",
+    "lingxi-detail-parameters-shared.webp",
+    "lingxi-detail-materials-desktop.webp"
+  ],
+  "retained_sources": [
+    "source/editor.png",
+    "source/mask.png",
+    "source/materials.png",
+    "samples/kids-shelf.png"
+  ],
+  "reproduced_three": true,
+  "visual_checks": {
+    "widths": [
+      288,
+      358
+    ],
+    "control": "选择区域及涂抹选择完整，选中边框完整",
+    "materials": "木材及两条完整名称，无半截第三控件",
+    "preview": "完整首张纹理卡及细腻哑光标签",
+    "interface_modified": false
+  },
+  "images": [
+    {
+      "path": "lingxi-detail-editor-desktop.webp",
+      "width": 1920,
+      "height": 1200,
+      "sha256": "305f0febc19b1f1471fc246843c8cba8d0248de2c84a7178a1dbfa91dee225e8",
+      "crop": {
+        "left": 0,
+        "top": 0,
+        "width": 1920,
+        "height": 1200
+      }
+    },
+    {
+      "path": "lingxi-detail-editor-mobile.webp",
+      "width": 900,
+      "height": 1088,
+      "sha256": "041977808d59d155e2990f0577bb8ffa1362a7175a59c68e681cf73ffb687b30",
+      "crop": {
+        "left": 700,
+        "top": 270,
+        "width": 720,
+        "height": 870
+      }
+    },
+    {
+      "path": "lingxi-detail-mask-shared.webp",
+      "width": 1200,
+      "height": 1200,
+      "sha256": "39590cab898bf1bf19c173775fc70acd1926564d0ec5e334fc13477972e043ab",
+      "crop": {
+        "left": 710,
+        "top": 278,
+        "width": 700,
+        "height": 700
+      }
+    },
+    {
+      "path": "lingxi-detail-intent-shared.webp",
+      "width": 900,
+      "height": 906,
+      "sha256": "c221bfc67ae69053cd2602c6293def605bb19d0dea603c608459902f8d62f573",
+      "crop": {
+        "left": 197,
+        "top": 228,
+        "width": 283,
+        "height": 285
+      }
+    },
+    {
+      "path": "lingxi-detail-parameters-shared.webp",
+      "width": 900,
+      "height": 164,
+      "sha256": "db4a65f4375d5288207bb52a4386486c1388d4cddbbe701e2903d95dc4008c0f",
+      "crop": {
+        "left": 237,
+        "top": 1035,
+        "width": 220,
+        "height": 40
+      }
+    },
+    {
+      "path": "lingxi-detail-materials-desktop.webp",
+      "width": 1600,
+      "height": 699,
+      "sha256": "f1d465657605b101958cadad236dad92325d042bcfeb31440aaa787738deb457",
+      "crop": {
+        "left": 197,
+        "top": 365,
+        "width": 710,
+        "height": 310
+      }
+    },
+    {
+      "path": "lingxi-detail-materials-mobile.webp",
+      "width": 900,
+      "height": 332,
+      "sha256": "3586560761fd33c1b100cafdc75dfb7450507e90141a9959ba7dfecdd00e6d70",
+      "crop": {
+        "left": 208,
+        "top": 486,
+        "width": 168,
+        "height": 62
+      }
+    },
+    {
+      "path": "lingxi-detail-mask-controls-shared.webp",
+      "width": 900,
+      "height": 426,
+      "sha256": "f30159a9499513cdcc84ce03b8bc626ad3ab786d0d8926574fc0a10652494a11",
+      "crop": {
+        "left": 197,
+        "top": 122,
+        "width": 190,
+        "height": 90
+      }
+    },
+    {
+      "path": "lingxi-detail-materials-preview-mobile.webp",
+      "width": 900,
+      "height": 908,
+      "sha256": "823cbd1fb65fbe83fe7207c5a7bf47e33fae63a8a8b1c30eb30b4e6f57e47dde",
+      "crop": {
+        "left": 590,
+        "top": 530,
+        "width": 113,
+        "height": 114
+      }
+    }
+  ]
+}
